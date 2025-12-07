@@ -1,15 +1,7 @@
-1.[Descrição](#-descrição)
+## 🔹 Como visualizar o projeto
+Todo o projeto está estruturado com docker, basta utilizar da ferramenta para facilitar o processo.
 
-
-
-
-
-## 🔹 Descrição
-
+1. ### Clone o repositório:
 ```bash
-docker compose up -d --build
+git clone https://github.com/Ivan-Martins-DevProjects/Agenda-Pro.git
 ```
-
-testando readme `Testando`
-
-### Clone
