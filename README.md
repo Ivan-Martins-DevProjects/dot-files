@@ -5,3 +5,7 @@
 
 
 ## 🔹 Descrição
+
+```bash
+docker compose up -d --build
+```
