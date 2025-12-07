@@ -20,11 +20,11 @@ docker-compose up -d --build
 [http://localhost:7000/login.html](http://localhost:7000/login.html)
 
 5. ### Insira as seguintes credenciais:
-#### Login:
+### Login:
 ```bash
 admin@admin.com
 ```
-#### Senha:
+### Senha:
 ```bash
 admin
 ```
