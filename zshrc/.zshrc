@@ -14,10 +14,6 @@ fi
 # Carrega variáveis de ambiente personalizadas
 . "$HOME/.local/share/../bin/env"
 
-# Correção: Carrega as configurações do Omarchy diretamente no Zsh
-# A linha anterior `bash -c "source ..."` não funcionava como esperado.
-#source ~/.local/share/omarchy/default/bash/rc
-
 # Define variáveis de ambiente para Go
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOPATH/bin
@@ -37,97 +33,77 @@ eval "$(fzf --zsh)"
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 
-# --- Funções Personalizadas ---
-
-# Função para busca interativa de texto com ripgrep e fzf, abrindo o resultado no editor
-# Portada do .bashrc, totalmente compatível com Zsh.
-rf() {
-  if [ ! "$#" -gt 0 ]; then echo "Precisa de um padrão de busca"; return 1; fi
+# Função para busca interativa com ripgrep e fzf.
+fzf_file() {
   local file
-  local line
-  read -r file line <<<$(rg --line-number "$@" | fzf --delimiter : --preview 'bat --style=numbers --color=always --highlight-line {2} {1}' --preview-window +{2}-/5 | awk -F: '{print $1, $2}')
-  if [ -n "$file" ]; then
-    $EDITOR +"$line" "$file"
-  fi
-}
 
-# Função para mudar de diretório, usando zoxide se o caminho não for exato
-zd() {
-  if [ $# -eq 0 ]; then
-    builtin cd ~ && return
-  elif [ -d "$1" ]; then
-    builtin cd "$1"
-  else
-    z "$@" && printf "\U000F17A9 " && pwd || echo "Error: Directory not found"
-  fi
-}
-
-# Função para abrir arquivos com o aplicativo padrão em background
-open() {
-  xdg-open "$@" >/dev/null 2>&1 &
-}
-
-# Função para buscar e editar um arquivo interativamente com fzf
-# Usa 'fd' se disponível, senão usa 'find'. Mostra prévia com 'bat'.
-fzf_edit() {
-  local file
-  local file_list_cmd
-
-  # Usa 'fd' (find alternativo) se estiver instalado, senão usa 'find'.
-  # 'fd' é mais rápido e já ignora arquivos do .gitignore.
+  # Usa 'fd' se disponível, senão 'find'
   if command -v fd >/dev/null 2>&1; then
-    file_list_cmd="fd --type f --hidden --follow --exclude .git"
+    file=$(fd --type f --hidden --follow --exclude .git | fzf --preview="bat --style=numbers --color=always {}" --prompt="Abrir arquivo> ")
   else
-    file_list_cmd="find . -type f -not -path './.git/*'"
+    file=$(find . -type f -not -path './.git/*' | fzf --prompt="Abrir arquivo> ")
   fi
 
-  # Executa o comando de listagem, passa para o fzf e armazena o arquivo selecionado
-  file=$(eval "$file_list_cmd" | fzf --prompt="🔍 Editar arquivo> " --preview 'bat --style=numbers --color=always --line-range :500 {}')
-
-  # Se um arquivo foi selecionado, abre-o com o editor
+  # Se algum arquivo foi selecionado, abre no vim (ou apenas imprime)
   if [[ -n "$file" ]]; then
-    echo "Abrindo '$file'..."
-    v "$file"
-    zle reset-prompt
-  else
-    echo "Nenhum arquivo selecionado."
-    zle reset-prompt
+    nvim "$file"
   fi
 }
 
-# --- Atalho de Teclado para a Função ---
-zle -N fzf_edit
-bindkey '^[c' fzf_edit # Exemplo: Ctrl+E para Editar
-bindkey -s '^[e' 'clipcat-menu insert\n'
+# 2. Registra a função wrapper como um widget do Zsh com o nome 'rf_widget'
+zle -N rf_widget fzf_file
+bindkey '^[c' rf_widget
 
 # ==============================================================================
-# Função para buscar e navegar para um diretório com fzf
+#   Atalhos de Teclado e Funções com FZF
 # ==============================================================================
-fzf_cd() {
-  local dir
 
-  # Usa 'fd' (find alternativo) se estiver instalado, senão usa 'find'.
-  # 'fd' é mais rápido, já ignora pastas do .gitignore e inclui hidden por padrão nesta busca.
-  if command -v fd >/dev/null 2>&1; then
-    dir=$(fd --type d --hidden --follow --exclude .git | fzf --prompt="📁 Navegar para> ")
-  else
-    # Fallback para o 'find' tradicional
-    dir=$(find . -type d -not -path './.git/*' | fzf --prompt="📁 Navegar para> ")
-  fi
+# --- 1. Atalho ALT+R para carregar sessões tmuxp com fzf (Execução Direta) ---
+# Define o diretório onde seus arquivos de sessão do tmuxp estão.
+TMUXP_SESSIONS_DIR="$HOME/sessions"
 
-  # Se um diretório foi selecionado, navega até ele
-  if [[ -n "$dir" ]]; then
-    cd "$dir"
-    # Reseta o prompt para refletir a nova localização
+# A função que executa a lógica do fuzzy finder e executa o comando diretamente.
+_tmuxp_fzf_load() {
+  local session
+  session=$(find "$TMUXP_SESSIONS_DIR" -maxdepth 1 -type f -printf "%f\n" | fzf --prompt="Tmux Session> ")
+
+  if [[ -n "$session" ]]; then
+    if tmux has-session -t "$session" 2>/dev/null; then
+      # Sessão existe, anexar
+      BUFFER="tmux a -t $session"
+    else
+      # Sessão não existe, executar script
+      BUFFER="~/sessions/${session%.*}.sh"
+    fi
+
+    zle accept-line
     zle reset-prompt
   fi
 }
+# Cria um widget ZLE a partir da função e o associa ao ALT+R.
+zle -N tmuxp_fzf_widget _tmuxp_fzf_load
+bindkey '\er' tmuxp_fzf_widget
 
-# --- Atalho de Teclado para a Função ---
-zle -N fzf_cd
-bindkey '^R' fzf_cd
+# --- 3. Atalhos existentes para clipcat ---
+bindkey -s '^[e' 'clipcat-menu insert\n' # Alt+E para o menu do clipcat
 
+# Atalho  para dividir painel tmux
+split_panel() {
+  if [ -n "$TMUX" ]; then
+  BUFFER="tmux split-window -v -p 30"
+
+  zle accept-line
+  zle reset-prompt
+  else
+    echo "Sessão do Tmux não encontrada"
+  fi
+}
+
+zle -N split_panel 
+bindkey '^P' split_panel
+# ==============================================================================
 # --- Aliases ---
+# ==============================================================================
 
 # Geral
 alias v="nvim"
@@ -141,7 +117,6 @@ alias lsa='ls -a'
 alias lt='eza --tree --level=2 --long --icons --git'
 alias lta='lt -a'
 alias ff="fzf --preview 'bat --style=numbers --color=always {}'"
-alias cd="zd" # Sobrescreve o cd para usar a função zd
 
 # Navegação de Diretórios
 alias ..='cd ..'
@@ -163,4 +138,7 @@ alias r='rails'
 
 # Python
 alias cvenv='python3 -m venv venv'
-alias svenv='source venv/bin/activate'
+alias svenv='source venv/bin/activate'lias svenv='source venv/bin/activate'
+
+# LazyConfig
+alias lazyconfig='cd ~/.config/nvim/lua'
