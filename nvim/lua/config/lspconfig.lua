@@ -1,0 +1,1 @@
+-- roslyn.nvim configura o LSP em lua/plugins/roslyn.lua

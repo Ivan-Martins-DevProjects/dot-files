@@ -1,44 +1,65 @@
 return {
-  {
-    "saghen/blink.cmp",
-    opts = {
-      -- Configura o comportamento da lista
-      completion = {
-        list = {
-          selection = {
-            preselect = false, -- Impede que ele selecione o primeiro automaticamente
-            auto_insert = true, -- Insere o texto conforme você navega (opcional)
-          },
-        },
-      },
-      -- Configura os atalhos manualmente para controle total
-      keymap = {
-        preset = "none", -- Removemos o padrão para não haver conflito
-        ["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
-        ["<C-e>"] = { "hide" },
-        ["<CR>"] = { "accept", "fallback" },
+  "saghen/blink.cmp",
+  version = "v0.*", -- ou use range apropriado
+  dependencies = { "rafamadriz/friendly-snippets" },
+  opts = {
+    -- 1. Atalhos de Teclado (Presets)
+    -- "default", "super-tab", ou "enter"
+    keymap = {
+      preset = "super-tab",
+      -- Exemplo de customização manual se não usar o preset:
+      -- ["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
+      ["<CR>"] = { "accept", "fallback" },
+      ["<Tab>"] = { "select_next", "snippet_forward", "fallback" },
+      ["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
+    },
 
-        ["<Tab>"] = {
-          function(cmp)
-            if cmp.is_visible() then
-              return cmp.select_next()
-            else
-              return cmp.snippet_forward() -- Pula para o próximo campo de snippet
-            end
-          end,
-          "fallback",
-        },
-        ["<S-Tab>"] = {
-          function(cmp)
-            if cmp.is_visible() then
-              return cmp.select_prev()
-            else
-              return cmp.snippet_backward() -- Volta no campo de snippet
-            end
-          end,
-          "fallback",
-        },
+    -- 2. Aparência da Janela de Completar
+    appearance = {
+      -- Ajusta o estilo dos ícones para fontes Nerd Font mono
+      nerd_font_variant = "mono",
+      -- Mantém compatibilidade visual limpa semelhante ao nvim-cmp
+      use_nvim_cmp_as_default = true,
+    },
+
+    -- 3. Fontes de Dados (Sources)
+    sources = {
+      default = { "lsp", "path", "snippets", "buffer" },
+
+      per_filetype = {
+        cs = { inherit_defaults = true, sources = { "lsp", "snippets", "path", "buffer" } },
       },
     },
+
+    -- 4. Comportamento da Janela de Documentação e Menu
+    completion = {
+      trigger = {
+        -- Mostra o menu automaticamente ao digitar
+        show_on_keyword = true,
+        show_on_trigger_character = true,
+      },
+      menu = {
+        border = "rounded",
+        draw = {
+          columns = { { "kind_icon" }, { "label", "label_description", gap = 1 } },
+        },
+      },
+      documentation = {
+        auto_show = true,
+        auto_show_delay_ms = 200,
+        window = {
+          border = "rounded",
+        },
+      },
+      ghost_text = {
+        enabled = true, -- Exibe texto fantasma da sugestão em tempo real
+      },
+    },
+
+    -- 5. Motor de Busca Difusa (Fuzzy Matching)
+    fuzzy = {
+      implementation = "prefer_rust_with_warning", -- Usa motor em Rust otimizado para alta performance
+    },
   },
+  opts_extend = { "sources.default" },
 }

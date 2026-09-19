@@ -40,28 +40,6 @@ return {
     end,
   },
 
-  -- change some telescope options and a keymap to browse plugin files
-  {
-    "nvim-telescope/telescope.nvim",
-    -- change some options
-    opts = {
-      defaults = {
-        layout_strategy = "horizontal",
-        layout_config = { prompt_position = "top" },
-        sorting_strategy = "ascending",
-        winblend = 0,
-
-        file_ignore_patterns = {
-          "bin/",
-          "obj/",
-          "%.vs/",
-          "TestResults/",
-          "packages/",
-        },
-      },
-    },
-  },
-
   -- add pyright to lspconfig
   {
     "neovim/nvim-lspconfig",
@@ -83,7 +61,7 @@ return {
       init = function()
         require("lazyvim.util").lsp.on_attach(function(_, buffer)
           -- stylua: ignore
-          vim.keymap.set( "n", "<leader>co", "TypescriptOrganizeImports", { buffer = buffer, desc = "Organize Imports" })
+          vim.keymap.set("n", "<leader>co", "TypescriptOrganizeImports", { buffer = buffer, desc = "Organize Imports" })
           vim.keymap.set("n", "<leader>cR", "TypescriptRenameFile", { desc = "Rename File", buffer = buffer })
         end)
       end,
@@ -112,7 +90,7 @@ return {
 
   -- for typescript, LazyVim also includes extra specs to properly setup lspconfig,
   -- treesitter, mason and typescript.nvim. So instead of the above, you can use:
-  { import = "lazyvim.plugins.extras.lang.typescript" },
+  -- (imported in config/lazy.lua)
 
   -- add more treesitter parsers
   {
@@ -133,6 +111,10 @@ return {
         "typescript",
         "vim",
         "yaml",
+        "go",
+        "gomod",
+        "gowork",
+        "gosum",
       },
     },
   },
@@ -176,10 +158,10 @@ return {
   },
 
   -- use mini.starter instead of alpha
-  { import = "lazyvim.plugins.extras.ui.mini-starter" },
+  -- (imported in config/lazy.lua)
 
   -- add jsonls and schemastore packages, and setup treesitter for json, json5 and jsonc
-  { import = "lazyvim.plugins.extras.lang.json" },
+  -- (imported in config/lazy.lua)
 
   -- add any tools you want to have installed below
   {

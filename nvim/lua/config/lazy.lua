@@ -16,44 +16,36 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
   spec = {
-    -- 1. Importa as configurações padrão do LazyVim
+    -- add LazyVim and import its plugins
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
-
-    -- 2. Configuração do Tema Sonokai
-    {
-      "sainnhe/sonokai",
-      lazy = false,
-      priority = 1000,
-      config = function()
-        -- Configurações de estilo do Sonokai
-        vim.g.sonokai_enable_italic = true
-        vim.g.sonokai_style = "atlantis" -- Opções: default, aurora, andromeda, shusia, maia, atlantis
-        vim.cmd.colorscheme("sonokai")
-
-        vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
-        vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
-        vim.api.nvim_set_hl(0, "NormalNC", { bg = "none" })
-        vim.api.nvim_set_hl(0, "SignColumn", { bg = "none" })
-      end,
-    },
-
-    -- 3. Importa seus plugins customizados da pasta lua/plugins/
-    -- É aqui que você deve colocar o easy-dotnet, por exemplo.
+    -- import LazyVim extras
+    { import = "lazyvim.plugins.extras.lang.typescript" },
+    { import = "lazyvim.plugins.extras.lang.json" },
+    -- import/override with your plugins
     { import = "plugins" },
   },
   defaults = {
+    -- By default, only LazyVim plugins will be lazy-loaded. Your custom plugins will load during startup.
+    -- If you know what you're doing, you can set this to `true` to have all your custom plugins lazy-loaded by default.
     lazy = false,
-    version = false,
+    -- It's recommended to leave version=false for now, since a lot the plugin that support versioning,
+    -- have outdated releases, which may break your Neovim install.
+    version = false, -- always use the latest git commit
+    -- version = "*", -- try installing the latest stable version for plugins that support semver
   },
-  install = { colorscheme = { "sonokai", "habamax" } },
+  install = { colorscheme = { "tokyonight", "habamax" } },
   checker = {
-    enabled = true,
-    notify = false,
-  },
+    enabled = true, -- check for plugin updates periodically
+    notify = false, -- notify on update
+  }, -- automatically check for plugin updates
   performance = {
     rtp = {
+      -- disable some rtp plugins
       disabled_plugins = {
         "gzip",
+        -- "matchit",
+        -- "matchparen",
+        -- "netrwPlugin",
         "tarPlugin",
         "tohtml",
         "tutor",
@@ -61,4 +53,4 @@ require("lazy").setup({
       },
     },
   },
-}) -- Fechamento correto da função setup)
+})
